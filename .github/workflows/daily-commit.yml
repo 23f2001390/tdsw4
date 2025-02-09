@@ -15,24 +15,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Install Python dependencies
-        uses: astral-sh/setup-uv@v5
-      
       - name: Configure Git (23f2001390@ds.study.iitm.ac.in)
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "23f2001390@ds.study.iitm.ac.in"
       
-      - name: Run IMDb scraper
+      - name: Create daily update
         run: |
-          uv run --with httpx,lxml,cssselect python scrape.py
-      
-      - name: Update timestamp file
-        run: |
-          echo "Last repository update: $(date)" > last_update.txt
+          # Create updates directory if it doesn't exist
+          mkdir -p updates
+          
+          # Generate timestamp file with additional information
+          TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S UTC')
+          {
+            echo "Repository Update Log"
+            echo "===================="
+            echo "Last Updated: $TIMESTAMP"
+            echo "Workflow Run ID: $GITHUB_RUN_ID"
+            echo "Workflow Run Number: $GITHUB_RUN_NUMBER"
+          } > "updates/update_${GITHUB_RUN_NUMBER}.log"
       
       - name: Commit and push changes
         run: |
-          git add *.json last_update.txt
-          git commit -m "Daily update: IMDb Top 250 data and timestamp [skip ci]" || exit 0
+          git add updates/
+          git commit -m "Daily repository update - $GITHUB_RUN_NUMBER [$(date '+%Y-%m-%d')]" || exit 0
           git push
